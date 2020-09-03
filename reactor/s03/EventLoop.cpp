@@ -48,8 +48,8 @@ EventLoop::EventLoop()
         t_loopInThisThread = this;
     }
 
-    wakeupChannel_->setReadCallback([this]() { handleRead(); });
-    wakeupChannel_->enableReading();
+    wakeupChannel_->SetReadCallback([this]() { handleRead(); });
+    wakeupChannel_->EnableReading();
 }
 
 EventLoop::~EventLoop()
@@ -72,7 +72,7 @@ void EventLoop::loop()
         pollReturnTime_ = poller_->poll(kPollTimeMs, &activeChannels_);
         for (auto& ch : activeChannels_)
         {
-            ch->handleEvent();
+            ch->HandleEvent();
         }
         doPendingFunctors();
     }
@@ -135,7 +135,7 @@ TimerId EventLoop::runEvery(const Duration& interval, const TimerCallback& cb)
 
 void EventLoop::updateChannel(Channel* channel)
 {
-    assert(channel->ownerLoop() == this);
+    assert(channel->OwnerLoop() == this);
     assertInLoopThread();
     poller_->updateChannel(channel);
 }

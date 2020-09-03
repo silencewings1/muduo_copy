@@ -12,43 +12,36 @@ public:
 public:
     Channel(EventLoop* loop, int fd);
 
-    void handleEvent();
+    void HandleEvent();
 
-    void setReadCallback(const EventCallback& cb) { readCallback_ = cb; }
-    void setWriteCallback(const EventCallback& cb) { writeCallback_ = cb; }
-    void setErrorCallback(const EventCallback& cb) { errorCallback_ = cb; }
+    void SetReadCallback(const EventCallback& cb) { read_cb = cb; }
+    void SetWriteCallback(const EventCallback& cb) { write_cb = cb; }
+    void SetErrorCallback(const EventCallback& cb) { error_cb = cb; }
 
     int fd() const { return fd_; }
     int events() const { return events_; }
     void set_revents(int revt) { revents_ = revt; }
-    bool isNoneEvent() const { return events_ == kNoneEvent; }
 
-    void enableReading()
-    {
-        events_ |= kReadEvent;
-        update();
-    }
+    bool IsNoneEvent() const;
+    void EnableReading();
 
     // for Poller
-    int index() { return index_; }
-    void set_index(int idx) { index_ = idx; }
-    EventLoop* ownerLoop() { return loop_; }
+    int Index() { return index; }
+    void SetIndex(int idx) { index = idx; }
+    EventLoop* OwnerLoop() { return loop; }
 
 private:
     void update();
 
 private:
-    static const int kNoneEvent;
-    static const int kReadEvent;
-    static const int kWriteEvent;
+    EventLoop* loop;
 
-    EventLoop* loop_;
     const int fd_;
     int events_;
     int revents_;
-    int index_; // used by Poller.
+    int index; // used by Poller.
 
-    EventCallback readCallback_;
-    EventCallback writeCallback_;
-    EventCallback errorCallback_;
+    EventCallback read_cb;
+    EventCallback write_cb;
+    EventCallback error_cb;
 };

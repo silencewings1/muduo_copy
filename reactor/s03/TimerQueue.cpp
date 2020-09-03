@@ -72,8 +72,8 @@ TimerQueue::TimerQueue(EventLoop* loop)
     , timerfd_(createTimerfd())
     , timerfdChannel_(loop, timerfd_)
 {
-    timerfdChannel_.setReadCallback([this]() { handleRead(); });
-    timerfdChannel_.enableReading();
+    timerfdChannel_.SetReadCallback([this]() { handleRead(); });
+    timerfdChannel_.EnableReading();
 }
 
 TimerQueue::~TimerQueue()
