@@ -72,7 +72,7 @@ void EventLoop::Loop()
     while (!quit)
     {
         active_channels.clear();
-        poll_return_time = poller->poll(POLL_TIME_MS, &active_channels);
+        poll_return_time = poller->Poll(POLL_TIME_MS, &active_channels);
         for (auto& ch : active_channels)
         {
             ch->HandleEvent();
