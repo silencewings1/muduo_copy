@@ -26,7 +26,7 @@ public:
                      Duration interval);
 
 private:
-    void handleRead();
+    void HandleRead();
 
     std::vector<Entry> getExpired(TimeStamp now);
     void reset(const std::vector<Entry>& expired, TimeStamp now);

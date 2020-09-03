@@ -10,7 +10,7 @@ EventLoopThread::EventLoopThread()
 EventLoopThread::~EventLoopThread()
 {
     exiting_ = true;
-    loop_->quit();
+    loop_->Quit();
     thread_.join();
 }
 
@@ -36,6 +36,6 @@ void EventLoopThread::Task()
         cond_.notify_one();
     }
 
-    loop.loop();
+    loop.Loop();
     //assert(exiting_);
 }

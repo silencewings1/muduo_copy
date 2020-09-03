@@ -52,9 +52,9 @@ void Poller::fillActiveChannels(int numEvents, ChannelList* activeChannels) cons
     }
 }
 
-void Poller::updateChannel(Channel* channel)
+void Poller::UpdateChannel(Channel* channel)
 {
-    assertInLoopThread();
+    AssertInLoopThread();
     LOG_TRACE << "fd = " << channel->fd() << " events = " << channel->events();
     if (channel->Index() < 0)
     {

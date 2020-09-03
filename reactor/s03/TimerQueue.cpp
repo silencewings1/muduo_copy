@@ -43,10 +43,10 @@ void readTimerfd(int timerfd, TimeStamp now)
 {
     uint64_t howmany;
     ssize_t n = ::read(timerfd, &howmany, sizeof(howmany));
-    LOG_TRACE << "TimerQueue::handleRead() " << howmany << " at " << now.ToString();
+    LOG_TRACE << "TimerQueue::HandleRead() " << howmany << " at " << now.ToString();
     if (n != sizeof(howmany))
     {
-        LOG_ERROR << "TimerQueue::handleRead() reads " << n << " bytes instead of 8";
+        LOG_ERROR << "TimerQueue::HandleRead() reads " << n << " bytes instead of 8";
     }
 }
 
@@ -72,7 +72,7 @@ TimerQueue::TimerQueue(EventLoop* loop)
     , timerfd_(createTimerfd())
     , timerfdChannel_(loop, timerfd_)
 {
-    timerfdChannel_.SetReadCallback([this]() { handleRead(); });
+    timerfdChannel_.SetReadCallback([this]() { HandleRead(); });
     timerfdChannel_.EnableReading();
 }
 
@@ -91,14 +91,14 @@ TimerId TimerQueue::addTimer(const TimerCallback& cb,
                              Duration interval)
 {
     Timer* timer = new Timer(cb, when, interval);
-    loop_->runInLoop([&]() { addTimerInLoop(timer); });
+    loop_->RunInLoop([&]() { addTimerInLoop(timer); });
 
     return TimerId(timer);
 }
 
 void TimerQueue::addTimerInLoop(Timer* timer)
 {
-    loop_->assertInLoopThread();
+    loop_->AssertInLoopThread();
     bool earliestChanged = insert(timer);
 
     if (earliestChanged)
@@ -107,9 +107,9 @@ void TimerQueue::addTimerInLoop(Timer* timer)
     }
 }
 
-void TimerQueue::handleRead()
+void TimerQueue::HandleRead()
 {
-    loop_->assertInLoopThread();
+    loop_->AssertInLoopThread();
 
     TimeStamp now(TimeStamp::Now());
     readTimerfd(timerfd_, now);

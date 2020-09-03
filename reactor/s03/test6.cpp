@@ -18,13 +18,13 @@ int main()
         EventLoopThread loopThread;
         EventLoop* loop = loopThread.startLoop();
 
-        loop->runInLoop(runInThread);
+        loop->RunInLoop(runInThread);
         std::this_thread::sleep_for(1s);
 
-        loop->runAfter(2s, runInThread);
+        loop->RunAfter(2s, runInThread);
         std::this_thread::sleep_for(3s);
 
-        loop->quit();
+        loop->Quit();
     }
 
     std::cout << "exit main\n";

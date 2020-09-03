@@ -31,7 +31,7 @@ public:
     EventLoop* OwnerLoop() { return loop; }
 
 private:
-    void update();
+    void Update();
 
 private:
     EventLoop* loop;

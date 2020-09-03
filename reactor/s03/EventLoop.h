@@ -1,9 +1,9 @@
 #pragma once
-#include "base/NonCopyable.h"
 #include "Callbacks.h"
+#include "TimerId.h"
+#include "base/NonCopyable.h"
 #include "datetime/TimeStamp.h"
 #include "thread/Thread.h"
-#include "TimerId.h"
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -21,53 +21,42 @@ public:
     EventLoop();
     ~EventLoop();
 
-    void loop();
-    void quit();
+    void Loop();
+    void Quit();
 
-    TimeStamp pollReturnTime() const { return pollReturnTime_; }
+    TimeStamp PollReturnTime() const { return poll_return_time; }
 
-    void runInLoop(const Functor& cb);
-    void queueInLoop(const Functor& cb);
+    void RunInLoop(const Functor& cb);
+    void QueueInLoop(const Functor& cb);
 
-    TimerId runAt(const TimeStamp& time, const TimerCallback& cb);
-    TimerId runAfter(const Duration& delay, const TimerCallback& cb);
-    TimerId runEvery(const Duration& interval, const TimerCallback& cb);
+    TimerId RunAt(const TimeStamp& time, const TimerCallback& cb);
+    TimerId RunAfter(const Duration& delay, const TimerCallback& cb);
+    TimerId RunEvery(const Duration& interval, const TimerCallback& cb);
 
-    void wakeup();
-    void updateChannel(Channel* channel);
+    void WakeUp();
+    void UpdateChannel(Channel* channel);
 
-    void assertInLoopThread()
-    {
-        if (!isInLoopThread())
-        {
-            abortNotInLoopThread();
-        }
-    }
-
-    bool isInLoopThread() const { return threadId_ == Tid(); }
+    void AssertInLoopThread();
+    bool IsInLoopThread() const;
 
 private:
-    void abortNotInLoopThread();
-    void handleRead(); // waked up
-    void doPendingFunctors();
+    void AbortNotInLoopThread();
+    void HandleRead(); // waked up
+    void DoPendingFunctors();
 
 private:
-    using ChannelList = std::vector<Channel*>;
+    bool looping;
+    bool quit;
+    bool calling_pending_functors;
 
-    bool looping_;                /* atomic */
-    bool quit_;                   /* atomic */
-    bool callingPendingFunctors_; /* atomic */
+    const ThreadID thread_id;
+    std::unique_ptr<Poller> poller;
+    std::unique_ptr<TimerQueue> timer_queue;
+    TimeStamp poll_return_time;
 
-    const ThreadID threadId_;
-    std::unique_ptr<Poller> poller_;
-    std::unique_ptr<TimerQueue> timerQueue_;
-    TimeStamp pollReturnTime_;
-
-    const int wakeupFd_;
-    std::unique_ptr<Channel> wakeupChannel_;
+    const int wakeup_fd;
+    std::unique_ptr<Channel> wakeup_channel;
 
     mutable std::mutex mutex_;
-    std::vector<Functor> pendingFunctors_;
-
-    ChannelList activeChannels_;
+    std::vector<Functor> pending_functors;
 };

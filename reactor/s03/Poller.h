@@ -18,9 +18,9 @@ public:
     Poller(EventLoop* loop);
 
     TimeStamp poll(int timeoutMs, ChannelList* activeChannels);
-    void updateChannel(Channel* channel);
+    void UpdateChannel(Channel* channel);
 
-    void assertInLoopThread() { ownerLoop_->assertInLoopThread(); }
+    void AssertInLoopThread() { ownerLoop_->AssertInLoopThread(); }
 
 private:
     void fillActiveChannels(int numEvents, ChannelList* activeChannels) const;

@@ -29,12 +29,12 @@ bool Channel::IsNoneEvent() const
 void Channel::EnableReading()
 {
     events_ |= READ_EVENT;
-    update();
+    Update();
 }
 
-void Channel::update()
+void Channel::Update()
 {
-    loop->updateChannel(this);
+    loop->UpdateChannel(this);
 }
 
 void Channel::HandleEvent()
