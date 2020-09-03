@@ -2,40 +2,37 @@
 #include "EventLoop.h"
 
 EventLoopThread::EventLoopThread()
-    : loop_(nullptr)
-    , exiting_(false)
+    : loop(nullptr)
 {
 }
 
 EventLoopThread::~EventLoopThread()
 {
-    exiting_ = true;
-    loop_->Quit();
+    loop->Quit();
     thread_.join();
 }
 
-EventLoop* EventLoopThread::startLoop()
+EventLoop* EventLoopThread::StartLoop()
 {
     thread_ = std::thread([this]() { this->Task(); });
 
     {
         std::unique_lock lock(mutex_);
-        cond_.wait(lock, [this]() { return loop_ != nullptr; });
+        cond_.wait(lock, [this]() { return loop != nullptr; });
     }
 
-    return loop_;
+    return loop;
 }
 
 void EventLoopThread::Task()
 {
-    EventLoop loop;
+    EventLoop loop_new;
 
     {
         std::unique_lock lock(mutex_);
-        loop_ = &loop;
+        loop = &loop_new;
         cond_.notify_one();
     }
 
-    loop.Loop();
-    //assert(exiting_);
+    loop_new.Loop();
 }

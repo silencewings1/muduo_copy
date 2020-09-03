@@ -6,37 +6,37 @@
 class Timer : NonCopyable
 {
 public:
-    Timer(const TimerCallback& cb, TimeStamp when, Duration interval)
-        : callback_(cb)
-        , expiration_(when)
-        , interval_(interval)
-        , repeat_(interval_.count() > 0)
+    Timer(const TimerCallback& timer_cb, TimeStamp when, Duration interval)
+        : cb(timer_cb)
+        , expiration(when)
+        , interval(interval)
+        , repeat(interval.count() > 0)
     {
     }
 
-    void run() const
+    void Run() const
     {
-        callback_();
+        cb();
     }
 
-    TimeStamp expiration() const { return expiration_; }
-    bool repeat() const { return repeat_; }
+    TimeStamp Expiration() const { return expiration; }
+    bool Repeat() const { return repeat; }
 
-    void restart(TimeStamp now)
+    void Restart(TimeStamp now)
     {
-        if (repeat_)
+        if (repeat)
         {
-            expiration_ = AddTime(now, interval_);
+            expiration = AddTime(now, interval);
         }
         else
         {
-            expiration_ = TimeStamp::Invalid();
+            expiration = TimeStamp::Invalid();
         }
     }
 
 private:
-    const TimerCallback callback_;
-    TimeStamp expiration_;
-    const Duration interval_;
-    const bool repeat_;
+    const TimerCallback cb;
+    TimeStamp expiration;
+    const Duration interval;
+    const bool repeat;
 };

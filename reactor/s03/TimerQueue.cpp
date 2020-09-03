@@ -103,7 +103,7 @@ void TimerQueue::addTimerInLoop(Timer* timer)
 
     if (earliestChanged)
     {
-        resetTimerfd(timerfd_, timer->expiration());
+        resetTimerfd(timerfd_, timer->Expiration());
     }
 }
 
@@ -120,7 +120,7 @@ void TimerQueue::HandleRead()
     for (std::vector<Entry>::iterator it = expired.begin();
          it != expired.end(); ++it)
     {
-        it->second->run();
+        it->second->Run();
     }
 
     reset(expired, now);
@@ -143,9 +143,9 @@ void TimerQueue::reset(const std::vector<Entry>& expired, TimeStamp now)
     for (std::vector<Entry>::const_iterator it = expired.begin();
          it != expired.end(); ++it)
     {
-        if (it->second->repeat())
+        if (it->second->Repeat())
         {
-            it->second->restart(now);
+            it->second->Restart(now);
             insert(it->second);
         }
         else
@@ -157,7 +157,7 @@ void TimerQueue::reset(const std::vector<Entry>& expired, TimeStamp now)
 
     if (!timers_.empty())
     {
-        TimeStamp nextExpire = timers_.begin()->second->expiration();
+        TimeStamp nextExpire = timers_.begin()->second->Expiration();
         if (nextExpire.Valid())
         {
             resetTimerfd(timerfd_, nextExpire);
@@ -168,7 +168,7 @@ void TimerQueue::reset(const std::vector<Entry>& expired, TimeStamp now)
 bool TimerQueue::insert(Timer* timer)
 {
     bool earliestChanged = false;
-    TimeStamp when = timer->expiration();
+    TimeStamp when = timer->Expiration();
     TimerList::iterator it = timers_.begin();
     if (it == timers_.end() || when < it->first)
     {

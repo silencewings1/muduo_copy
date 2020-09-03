@@ -1,8 +1,8 @@
 #pragma once
 #include "base/NonCopyable.h"
-#include "thread/Thread.h"
 #include <condition_variable>
 #include <mutex>
+#include <thread>
 
 class EventLoop;
 
@@ -12,14 +12,13 @@ public:
     EventLoopThread();
     ~EventLoopThread();
 
-    EventLoop* startLoop();
+    EventLoop* StartLoop();
 
 private:
     void Task();
 
 private:
-    EventLoop* loop_;
-    bool exiting_;
+    EventLoop* loop;
 
     std::thread thread_;
     std::mutex mutex_;

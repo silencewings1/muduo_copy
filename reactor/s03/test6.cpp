@@ -16,7 +16,7 @@ int main()
 
     {
         EventLoopThread loopThread;
-        EventLoop* loop = loopThread.startLoop();
+        EventLoop* loop = loopThread.StartLoop();
 
         loop->RunInLoop(runInThread);
         std::this_thread::sleep_for(1s);
