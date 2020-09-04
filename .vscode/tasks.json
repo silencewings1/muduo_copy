@@ -3,7 +3,7 @@
         {
             "type": "shell",
             "label": "cmake build",
-            "command": "cd build && cmake .. && make",
+            "command": "mkdir -p build && cd build && cmake .. && make",
             "options": {
                 "cwd": "${workspaceFolder}"
             },

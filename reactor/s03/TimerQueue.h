@@ -14,30 +14,30 @@ class TimerId;
 class TimerQueue : NonCopyable
 {
 private:
-    using Entry = std::pair<TimeStamp, Timer*>;
+    using Entry = std::pair<TimeStamp, std::shared_ptr<Timer>>;
     using TimerList = std::set<Entry>;
 
 public:
     TimerQueue(EventLoop* loop);
     ~TimerQueue();
 
-    TimerId addTimer(const TimerCallback& cb,
+    TimerId AddTimer(const TimerCallback& cb,
                      TimeStamp when,
                      Duration interval);
 
 private:
     void HandleRead();
 
-    std::vector<Entry> getExpired(TimeStamp now);
-    void reset(const std::vector<Entry>& expired, TimeStamp now);
-    bool insert(Timer* timer);
+    std::vector<Entry> GetExpired(TimeStamp now);
+    void Reset(const std::vector<Entry>& expired, TimeStamp now);
+    bool Insert(std::shared_ptr<Timer> timer);
 
-    void addTimerInLoop(Timer* timer);
+    void AddTimerInLoop(std::shared_ptr<Timer> timer);
 
 private:
-    EventLoop* loop_;
+    EventLoop* loop;
 
-    const int timerfd_;
-    Channel timerfdChannel_;
-    TimerList timers_;
+    const int timer_fd;
+    Channel timer_channel;
+    TimerList timers;
 };

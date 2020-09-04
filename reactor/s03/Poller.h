@@ -15,13 +15,13 @@ public:
 public:
     Poller(EventLoop* loop);
 
-    TimeStamp Poll(int timeout_ms, ChannelList* active_channels);
+    TimeStamp Poll(int timeout_ms, ChannelList& active_channels);
     void UpdateChannel(Channel* channel);
 
     void AssertInLoopThread() { owner_loop->AssertInLoopThread(); }
 
 private:
-    void FillActiveChannels(int num_events, ChannelList* active_channels) const;
+    void FillActiveChannels(int num_events, ChannelList& active_channels) const;
 
 private:
     using PollFdList = std::vector<struct pollfd>;

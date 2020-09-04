@@ -12,7 +12,7 @@
 namespace
 {
 
-int createTimerfd()
+int CreateTimerfd()
 {
     int timerfd = ::timerfd_create(CLOCK_MONOTONIC,
                                    TFD_NONBLOCK | TFD_CLOEXEC);
@@ -20,10 +20,11 @@ int createTimerfd()
     {
         LOG_SYSFATAL << "Failed in timerfd_create";
     }
+
     return timerfd;
 }
 
-struct timespec howMuchTimeFromNow(TimeStamp when)
+struct timespec TimeSinceNow(TimeStamp when)
 {
     using namespace std::chrono;
     using namespace std::chrono_literals;
@@ -39,7 +40,19 @@ struct timespec howMuchTimeFromNow(TimeStamp when)
     return ts;
 }
 
-void readTimerfd(int timerfd, TimeStamp now)
+void ResetTimerfd(int timerfd, TimeStamp expiration)
+{
+    struct itimerspec newValue;
+    bzero(&newValue, sizeof(newValue));
+    newValue.it_value = TimeSinceNow(expiration);
+    int ret = ::timerfd_settime(timerfd, 0, &newValue, nullptr);
+    if (ret)
+    {
+        LOG_SYSERR << "timerfd_settime()";
+    }
+}
+
+void ReadTimerfd(int timerfd, TimeStamp now)
 {
     uint64_t howmany;
     ssize_t n = ::read(timerfd, &howmany, sizeof(howmany));
@@ -50,132 +63,103 @@ void readTimerfd(int timerfd, TimeStamp now)
     }
 }
 
-void resetTimerfd(int timerfd, TimeStamp expiration)
-{
-    // wake up loop by timerfd_settime()
-    struct itimerspec newValue;
-    struct itimerspec oldValue;
-    bzero(&newValue, sizeof(newValue));
-    bzero(&oldValue, sizeof(oldValue));
-    newValue.it_value = howMuchTimeFromNow(expiration);
-    int ret = ::timerfd_settime(timerfd, 0, &newValue, &oldValue);
-    if (ret)
-    {
-        LOG_SYSERR << "timerfd_settime()";
-    }
-}
-
 } // namespace
 
 TimerQueue::TimerQueue(EventLoop* loop)
-    : loop_(loop)
-    , timerfd_(createTimerfd())
-    , timerfdChannel_(loop, timerfd_)
+    : loop(loop)
+    , timer_fd(CreateTimerfd())
+    , timer_channel(loop, timer_fd)
 {
-    timerfdChannel_.SetReadCallback([this]() { HandleRead(); });
-    timerfdChannel_.EnableReading();
+    timer_channel.SetReadCallback([this]() { HandleRead(); });
+    timer_channel.EnableReading();
 }
 
 TimerQueue::~TimerQueue()
 {
-    ::close(timerfd_);
-
-    for (auto& timer : timers_)
-    {
-        delete timer.second;
-    }
+    ::close(timer_fd);
 }
 
-TimerId TimerQueue::addTimer(const TimerCallback& cb,
+TimerId TimerQueue::AddTimer(const TimerCallback& cb,
                              TimeStamp when,
                              Duration interval)
 {
-    Timer* timer = new Timer(cb, when, interval);
-    loop_->RunInLoop([&]() { addTimerInLoop(timer); });
+    auto timer = std::make_shared<Timer>(cb, when, interval);
+    loop->RunInLoop([&]() { AddTimerInLoop(timer); });
 
-    return TimerId(timer);
+    return TimerId(timer.get());
 }
 
-void TimerQueue::addTimerInLoop(Timer* timer)
+void TimerQueue::AddTimerInLoop(std::shared_ptr<Timer> timer)
 {
-    loop_->AssertInLoopThread();
-    bool earliestChanged = insert(timer);
+    loop->AssertInLoopThread();
+    bool earliestChanged = Insert(timer);
 
     if (earliestChanged)
     {
-        resetTimerfd(timerfd_, timer->Expiration());
+        ResetTimerfd(timer_fd, timer->Expiration());
     }
 }
 
 void TimerQueue::HandleRead()
 {
-    loop_->AssertInLoopThread();
+    loop->AssertInLoopThread();
 
     TimeStamp now(TimeStamp::Now());
-    readTimerfd(timerfd_, now);
+    ReadTimerfd(timer_fd, now);
 
-    std::vector<Entry> expired = getExpired(now);
-
-    // safe to callback outside critical section
-    for (std::vector<Entry>::iterator it = expired.begin();
-         it != expired.end(); ++it)
+    auto expired = GetExpired(now);
+    for (auto& exp : expired)
     {
-        it->second->Run();
+        exp.second->Run();
     }
 
-    reset(expired, now);
+    Reset(expired, now);
 }
 
-std::vector<TimerQueue::Entry> TimerQueue::getExpired(TimeStamp now)
+std::vector<TimerQueue::Entry> TimerQueue::GetExpired(TimeStamp now)
 {
-    std::vector<Entry> expired;
-    Entry sentry = std::make_pair(now, reinterpret_cast<Timer*>(UINTPTR_MAX));
-    TimerList::iterator it = timers_.lower_bound(sentry);
-    assert(it == timers_.end() || now < it->first);
-    std::copy(timers_.begin(), it, back_inserter(expired));
-    timers_.erase(timers_.begin(), it);
+    auto it = timers.begin();
+    for (; it != timers.end(); ++it)
+    {
+        if (it->first >= now)
+            break;
+    }
+
+    std::vector<TimerQueue::Entry> expired;
+    std::copy(timers.begin(), it, std::back_inserter(expired));
+    timers.erase(timers.begin(), it);
 
     return expired;
 }
 
-void TimerQueue::reset(const std::vector<Entry>& expired, TimeStamp now)
+void TimerQueue::Reset(const std::vector<Entry>& expired, TimeStamp now)
 {
-    for (std::vector<Entry>::const_iterator it = expired.begin();
-         it != expired.end(); ++it)
+    for (const auto& exp : expired)
     {
-        if (it->second->Repeat())
+        if (exp.second->Repeat())
         {
-            it->second->Restart(now);
-            insert(it->second);
-        }
-        else
-        {
-            // FIXME move to a free list
-            delete it->second;
+            exp.second->Restart(now);
+            Insert(exp.second);
         }
     }
 
-    if (!timers_.empty())
+    if (!timers.empty())
     {
-        TimeStamp nextExpire = timers_.begin()->second->Expiration();
+        TimeStamp nextExpire = timers.begin()->second->Expiration();
         if (nextExpire.Valid())
         {
-            resetTimerfd(timerfd_, nextExpire);
+            ResetTimerfd(timer_fd, nextExpire);
         }
     }
 }
 
-bool TimerQueue::insert(Timer* timer)
+bool TimerQueue::Insert(std::shared_ptr<Timer> timer)
 {
-    bool earliestChanged = false;
-    TimeStamp when = timer->Expiration();
-    TimerList::iterator it = timers_.begin();
-    if (it == timers_.end() || when < it->first)
-    {
-        earliestChanged = true;
-    }
-    std::pair<TimerList::iterator, bool> result =
-        timers_.insert(std::make_pair(when, timer));
-    assert(result.second);
-    return earliestChanged;
+    auto when = timer->Expiration();
+
+    bool earliest_changed = timers.empty() || when < timers.begin()->first;
+    auto res = timers.insert(std::make_pair(when, timer));
+    assert(res.second);
+
+    return earliest_changed;
 }

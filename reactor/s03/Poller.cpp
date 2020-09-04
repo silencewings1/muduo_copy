@@ -11,7 +11,7 @@ Poller::Poller(EventLoop* loop)
 {
 }
 
-TimeStamp Poller::Poll(int timeout_ms, ChannelList* active_channels)
+TimeStamp Poller::Poll(int timeout_ms, ChannelList& active_channels)
 {
     int nums = ::poll(poll_fds.data(), poll_fds.size(), timeout_ms);
     auto now = TimeStamp::Now();
@@ -33,7 +33,7 @@ TimeStamp Poller::Poll(int timeout_ms, ChannelList* active_channels)
     return now;
 }
 
-void Poller::FillActiveChannels(int num_events, ChannelList* active_channels) const
+void Poller::FillActiveChannels(int num_events, ChannelList& active_channels) const
 {
     for (const auto& poll_fd : poll_fds)
     {
@@ -50,7 +50,7 @@ void Poller::FillActiveChannels(int num_events, ChannelList* active_channels) co
             assert(channel->fd() == poll_fd.fd);
             channel->set_revents(poll_fd.revents);
 
-            active_channels->push_back(channel);
+            active_channels.push_back(channel);
         }
     }
 }

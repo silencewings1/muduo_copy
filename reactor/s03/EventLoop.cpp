@@ -72,7 +72,7 @@ void EventLoop::Loop()
     while (!quit)
     {
         active_channels.clear();
-        poll_return_time = poller->Poll(POLL_TIME_MS, &active_channels);
+        poll_return_time = poller->Poll(POLL_TIME_MS, active_channels);
         for (auto& ch : active_channels)
         {
             ch->HandleEvent();
@@ -121,7 +121,7 @@ void EventLoop::QueueInLoop(const Functor& cb)
 TimerId EventLoop::RunAt(const TimeStamp& time, const TimerCallback& cb)
 {
     using namespace std::chrono_literals;
-    return timer_queue->addTimer(cb, time, 0s);
+    return timer_queue->AddTimer(cb, time, 0s);
 }
 
 TimerId EventLoop::RunAfter(const Duration& delay, const TimerCallback& cb)
@@ -131,7 +131,7 @@ TimerId EventLoop::RunAfter(const Duration& delay, const TimerCallback& cb)
 
 TimerId EventLoop::RunEvery(const Duration& interval, const TimerCallback& cb)
 {
-    return timer_queue->addTimer(cb, AddTime(TimeStamp::Now(), interval), interval);
+    return timer_queue->AddTimer(cb, AddTime(TimeStamp::Now(), interval), interval);
 }
 
 void EventLoop::UpdateChannel(Channel* channel)
