@@ -1,4 +1,3 @@
-#define __STDC_LIMIT_MACROS
 #include "TimerQueue.h"
 #include "EventLoop.h"
 #include "Timer.h"
@@ -14,14 +13,14 @@ namespace
 
 int CreateTimerfd()
 {
-    int timerfd = ::timerfd_create(CLOCK_MONOTONIC,
+    int timer_fd = ::timerfd_create(CLOCK_MONOTONIC,
                                    TFD_NONBLOCK | TFD_CLOEXEC);
-    if (timerfd < 0)
+    if (timer_fd < 0)
     {
         LOG_SYSFATAL << "Failed in timerfd_create";
     }
 
-    return timerfd;
+    return timer_fd;
 }
 
 struct timespec TimeSinceNow(TimeStamp when)
@@ -40,23 +39,24 @@ struct timespec TimeSinceNow(TimeStamp when)
     return ts;
 }
 
-void ResetTimerfd(int timerfd, TimeStamp expiration)
+void ResetTimerfd(int timer_fd, TimeStamp expiration)
 {
     struct itimerspec newValue;
     bzero(&newValue, sizeof(newValue));
     newValue.it_value = TimeSinceNow(expiration);
-    int ret = ::timerfd_settime(timerfd, 0, &newValue, nullptr);
+    int ret = ::timerfd_settime(timer_fd, 0, &newValue, nullptr);
     if (ret)
     {
         LOG_SYSERR << "timerfd_settime()";
     }
 }
 
-void ReadTimerfd(int timerfd, TimeStamp now)
+void ReadTimerfd(int timer_fd, TimeStamp now)
 {
     uint64_t howmany;
-    ssize_t n = ::read(timerfd, &howmany, sizeof(howmany));
+    ssize_t n = ::read(timer_fd, &howmany, sizeof(howmany));
     LOG_TRACE << "TimerQueue::HandleRead() " << howmany << " at " << now.ToString();
+
     if (n != sizeof(howmany))
     {
         LOG_ERROR << "TimerQueue::HandleRead() reads " << n << " bytes instead of 8";
@@ -92,9 +92,9 @@ TimerId TimerQueue::AddTimer(const TimerCallback& cb,
 void TimerQueue::AddTimerInLoop(std::shared_ptr<Timer> timer)
 {
     loop->AssertInLoopThread();
-    bool earliestChanged = Insert(timer);
 
-    if (earliestChanged)
+    bool earliest_changed = Insert(timer);
+    if (earliest_changed)
     {
         ResetTimerfd(timer_fd, timer->Expiration());
     }
@@ -104,7 +104,7 @@ void TimerQueue::HandleRead()
 {
     loop->AssertInLoopThread();
 
-    TimeStamp now(TimeStamp::Now());
+    auto now = TimeStamp::Now();
     ReadTimerfd(timer_fd, now);
 
     auto expired = GetExpired(now);

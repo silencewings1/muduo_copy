@@ -18,8 +18,8 @@ int main()
         EventLoopThread loopThread;
         EventLoop* loop = loopThread.StartLoop();
 
-        loop->RunInLoop(runInThread);
-        std::this_thread::sleep_for(1s);
+        // loop->RunInLoop(runInThread);
+        // std::this_thread::sleep_for(1s);
 
         loop->RunAfter(2s, runInThread);
         std::this_thread::sleep_for(3s);

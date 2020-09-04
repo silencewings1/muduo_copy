@@ -96,7 +96,7 @@ void EventLoop::Quit()
 void EventLoop::RunInLoop(const Functor& cb)
 {
     if (IsInLoopThread())
-    {
+    { 
         cb();
     }
     else
