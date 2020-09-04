@@ -2,14 +2,11 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "C/C++: g++ build active file",
-            "command": "cd reactor/s03/ && make",
+            "label": "cmake build",
+            "command": "cd build && cmake .. && make",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "problemMatcher": [
-                "$gcc"
-            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
