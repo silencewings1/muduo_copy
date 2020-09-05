@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             // "program": "${fileDirname}/${fileBasenameNoExtension}",
-            "program": "${workspaceFolder}/build/reactor/s03/test6",
+            "program": "${workspaceFolder}/build/reactor/s04/test7",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
